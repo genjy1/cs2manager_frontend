@@ -20,11 +20,14 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useToast } from 'vue-toastification'
 import { postData } from '@/utils/data/postData'
 import InputText from '@/components/InputText.vue'
 import ButtonComponent from '@/components/ButtonComponent.vue'
 import CSLogo from '@/icons/CSLogo.vue'
 import router from '@/router'
+
+const toast = useToast()
 
 const form = ref([
   { name: 'name', id: 'name', value: '', type: 'text', label: 'Имя' },
@@ -39,11 +42,12 @@ const submitHandler = async () => {
 
     if (request.success) {
       localStorage.setItem('access_token', request.token)
+      toast.success('Вход выполнен успешно!')
       router.push({ name: 'Dashboard' })
     }
   } catch (error) {
     console.error('Login failed:', error)
-    alert(error.data?.message || 'Ошибка входа. Проверьте имя пользователя и пароль.')
+    toast.error(error.data?.message || 'Ошибка входа. Проверьте имя пользователя и пароль.')
   }
 }
 </script>

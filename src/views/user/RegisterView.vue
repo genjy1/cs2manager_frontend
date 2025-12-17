@@ -19,10 +19,15 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useToast } from 'vue-toastification'
+import { useRouter } from 'vue-router'
 import InputText from '@/components/InputText.vue'
 import CSLogo from '@/icons/CSLogo.vue'
 import ButtonComponent from '@/components/ButtonComponent.vue'
 import { postData } from '@/utils/data/postData'
+
+const toast = useToast()
+const router = useRouter()
 
 const form = ref([
   {
@@ -62,13 +67,15 @@ const submitHandler = async () => {
     const request = await postData('register', payload)
 
     if (request.success) {
-      alert('Регистрация успешна! Теперь вы можете войти.')
-      // Optionally redirect to login page
-      // router.push({ name: 'Login' })
+      toast.success('Регистрация успешна! Теперь вы можете войти.')
+      // Redirect to login page after short delay
+      setTimeout(() => {
+        router.push({ name: 'Login' })
+      }, 2000)
     }
   } catch (error) {
     console.error('Registration failed:', error)
-    alert(error.data?.message || 'Ошибка регистрации. Попробуйте еще раз.')
+    toast.error(error.data?.message || 'Ошибка регистрации. Попробуйте еще раз.')
   }
 }
 </script>

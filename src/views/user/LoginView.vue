@@ -34,14 +34,16 @@ const form = ref([
 const submitHandler = async () => {
   const payload = Object.fromEntries(form.value.map((item) => [item.name, item.value]))
 
-  const request = await postData('login', payload)
+  try {
+    const request = await postData('login', payload)
 
-  if (request.success) {
-    localStorage.setItem('access_token', request.token)
-    router.push({ name: 'Dashboard' })
+    if (request.success) {
+      localStorage.setItem('access_token', request.token)
+      router.push({ name: 'Dashboard' })
+    }
+  } catch (error) {
+    console.error('Login failed:', error)
+    alert(error.data?.message || 'Ошибка входа. Проверьте имя пользователя и пароль.')
   }
-
-  console.log('SEND:', payload)
-  console.log('sent', request)
 }
 </script>

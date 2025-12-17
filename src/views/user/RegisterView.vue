@@ -58,9 +58,17 @@ const form = ref([
 const submitHandler = async () => {
   const payload = Object.fromEntries(form.value.map((item) => [item.name, item.value]))
 
-  const request = await postData('register', payload)
+  try {
+    const request = await postData('register', payload)
 
-  console.log('SEND:', payload)
-  console.log('sent', request)
+    if (request.success) {
+      alert('Регистрация успешна! Теперь вы можете войти.')
+      // Optionally redirect to login page
+      // router.push({ name: 'Login' })
+    }
+  } catch (error) {
+    console.error('Registration failed:', error)
+    alert(error.data?.message || 'Ошибка регистрации. Попробуйте еще раз.')
+  }
 }
 </script>

@@ -202,6 +202,7 @@ const newPlayer = ref({
   surname: '',
   nickname: '',
   rating: '',
+  status: 'free_agent',
   avatar: null,
 })
 
@@ -233,7 +234,7 @@ const handleFileChange = (event) => {
 
   // Валидация типа файла
   if (!file.type.startsWith('image/')) {
-    alert('Пожалуйста, выберите изображение')
+    toast.error('Пожалуйста, выберите изображение')
     event.target.value = ''
     return
   }
@@ -241,7 +242,7 @@ const handleFileChange = (event) => {
   // Валидация размера файла (например, 5MB)
   const maxSize = 5 * 1024 * 1024 // 5MB
   if (file.size > maxSize) {
-    alert('Размер файла не должен превышать 5MB')
+    toast.error('Размер файла не должен превышать 5MB')
     event.target.value = ''
     return
   }
@@ -278,6 +279,7 @@ const resetForm = () => {
     surname: '',
     nickname: '',
     rating: '',
+    status: 'free_agent',
     avatar: null,
   }
   filePreview.value = null
@@ -307,6 +309,7 @@ const editPlayer = async (player) => {
     surname: player.surname,
     nickname: player.nickname,
     rating: player.rating.toString(),
+    status: player.player_status || 'free_agent',
     avatar: null,
   }
 
@@ -350,6 +353,7 @@ const savePlayer = async () => {
       surname: newPlayer.value.surname.trim(),
       nickname: newPlayer.value.nickname.trim(),
       rating: parseFloat(newPlayer.value.rating),
+      player_status: newPlayer.value.status,
       avatar: null,
       mime_type: null,
     }
@@ -426,9 +430,10 @@ const deletePlayer = async (id) => {
     await postData(`player/${id}/delete`)
     // Удаляем игрока из локального массива после успешного удаления
     players.value = players.value.filter((p) => p.id !== id)
+    toast.success('Игрок успешно удален!')
   } catch (error) {
     console.error('Ошибка при удалении игрока:', error)
-    alert('Произошла ошибка при удалении игрока')
+    toast.error(error.data?.message || 'Произошла ошибка при удалении игрока')
   }
 }
 

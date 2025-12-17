@@ -18,7 +18,7 @@
             aria-modal="true"
           >
             <header class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold">Добавить игрока</h2>
+              <h2 class="text-xl font-semibold">{{ isEditMode ? 'Редактировать игрока' : 'Добавить игрока' }}</h2>
               <button
                 class="text-gray-500 hover:text-red-500"
                 @click="closeModal"
@@ -28,7 +28,7 @@
               </button>
             </header>
 
-            <form class="space-y-4" @submit.prevent="createPlayer">
+            <form class="space-y-4" @submit.prevent="savePlayer">
               <FormGroup label="Имя">
                 <InputText v-model="newPlayer.name" required />
               </FormGroup>
@@ -133,6 +133,9 @@
               {{ item.rating }}
             </td>
             <td class="p-3 text-right space-x-2">
+              <button class="text-blue-500 hover:underline" @click="editPlayer(item)">
+                Редактировать
+              </button>
               <button class="text-red-500 hover:underline" @click="deletePlayer(item.id)">
                 Удалить
               </button>
@@ -162,6 +165,8 @@ const isSubmitting = ref(false)
 const modalRef = ref(null)
 const fileInputRef = ref(null)
 const buttonLabel = ref('Сохранить')
+const isEditMode = ref(false)
+const editingPlayerId = ref(null)
 
 const search = ref('')
 const pageSize = ref(10)
@@ -187,6 +192,8 @@ const openModal = async () => {
 
 const closeModal = () => {
   isModalActive.value = false
+  isEditMode.value = false
+  editingPlayerId.value = null
   resetForm()
 }
 
@@ -267,7 +274,29 @@ watch([search, pageSize], () => (page.value = 1))
 // В setup()
 const toast = useToast()
 
-const createPlayer = async () => {
+const editPlayer = async (player) => {
+  isEditMode.value = true
+  editingPlayerId.value = player.id
+
+  // Заполняем форму данными игрока
+  newPlayer.value = {
+    name: player.name,
+    surname: player.surname,
+    nickname: player.nickname,
+    rating: player.rating.toString(),
+    avatar: null,
+  }
+
+  // Если у игрока есть аватар, показываем его
+  if (player.images && player.images.length > 0 && player.images[0].base64) {
+    const mimeType = player.images[0].mime_type || 'image/jpeg'
+    filePreview.value = `data:${mimeType};base64,${player.images[0].base64}`
+  }
+
+  await openModal()
+}
+
+const savePlayer = async () => {
   // Валидация
   if (!newPlayer.value.name.trim()) {
     toast.error('Пожалуйста, введите имя игрока')
@@ -302,65 +331,61 @@ const createPlayer = async () => {
       mime: null,
     }
 
-    console.log('1. Начальный payload:', payload)
-    console.log('2. Avatar file:', newPlayer.value.avatar)
-    console.log('3. Avatar is File?', newPlayer.value.avatar instanceof File)
-
     // Обработка аватара
     if (newPlayer.value.avatar instanceof File) {
-      console.log('4. Начинаем конвертацию в base64...')
-
       try {
         const result = await toBase64(newPlayer.value.avatar)
-        console.log('5. Результат toBase64:', {
-          base64Length: result.base64?.length,
-          mime: result.mime,
-          base64Preview: result.base64?.substring(0, 50) + '...',
-        })
-
         payload.avatar = result.base64
         payload.mime = result.mime
-
-        console.log('6. Payload после добавления avatar:', {
-          ...payload,
-          avatar: payload.avatar
-            ? `${payload.avatar.substring(0, 50)}... (length: ${payload.avatar.length})`
-            : null,
-        })
       } catch (err) {
         console.error('Ошибка при конвертации изображения:', err)
         toast.error('Не удалось обработать изображение')
         return
       }
-    } else {
-      console.log('4. Avatar не является File объектом')
     }
 
-    console.log('7. Финальный payload перед отправкой:', {
-      ...payload,
-      avatar: payload.avatar ? `base64 string (${payload.avatar.length} chars)` : null,
-    })
-
     // Отправка данных
-    const response = await postData('player/new', payload)
-    console.log('8. Ответ от сервера:', response)
+    let response
+    if (isEditMode.value) {
+      // Обновление существующего игрока
+      response = await postData(`player/${editingPlayerId.value}/update`, payload)
 
-    // Добавляем игрока в список
-    players.value.push({
-      id: response.id || Date.now(),
-      name: payload.name,
-      surname: payload.surname,
-      nickname: payload.nickname,
-      rating: payload.rating,
-      avatar: response.avatar || payload.avatar,
-    })
+      // Обновляем игрока в списке
+      const index = players.value.findIndex(p => p.id === editingPlayerId.value)
+      if (index !== -1) {
+        players.value[index] = {
+          ...players.value[index],
+          name: payload.name,
+          surname: payload.surname,
+          nickname: payload.nickname,
+          rating: payload.rating,
+          ...(response.images && { images: response.images }),
+        }
+      }
 
-    toast.success('Игрок успешно добавлен!')
+      toast.success('Игрок успешно обновлен!')
+    } else {
+      // Создание нового игрока
+      response = await postData('player/new', payload)
+
+      // Добавляем игрока в список
+      players.value.push({
+        id: response.id || Date.now(),
+        name: payload.name,
+        surname: payload.surname,
+        nickname: payload.nickname,
+        rating: payload.rating,
+        ...(response.images && { images: response.images }),
+      })
+
+      toast.success('Игрок успешно добавлен!')
+    }
+
     resetForm()
     closeModal()
   } catch (err) {
-    console.error('Ошибка при создании игрока:', err)
-    const errorMessage = err.response?.data?.message || 'Произошла ошибка при создании игрока'
+    console.error('Ошибка при сохранении игрока:', err)
+    const errorMessage = err.data?.message || `Произошла ошибка при ${isEditMode.value ? 'обновлении' : 'создании'} игрока`
     toast.error(errorMessage)
   } finally {
     isSubmitting.value = false

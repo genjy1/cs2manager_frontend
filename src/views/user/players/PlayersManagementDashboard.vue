@@ -18,7 +18,9 @@
             aria-modal="true"
           >
             <header class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold">{{ isEditMode ? 'Редактировать игрока' : 'Добавить игрока' }}</h2>
+              <h2 class="text-xl font-semibold">
+                {{ isEditMode ? 'Редактировать игрока' : 'Добавить игрока' }}
+              </h2>
               <button
                 class="text-gray-500 hover:text-red-500"
                 @click="closeModal"
@@ -39,6 +41,27 @@
 
               <FormGroup label="Никнейм">
                 <InputText v-model="newPlayer.nickname" required />
+              </FormGroup>
+
+              <FormGroup label="Статус игрока">
+                <div class="relative">
+                  <select
+                    name="status"
+                    v-model="newPlayer.status"
+                    class="w-full appearance-none p-3 pr-10 border-2 rounded-lg border-white bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                  >
+                    <option value="free_agent">🟢 Свободный агент</option>
+                    <option value="in_team">🔵 В команде</option>
+                    <option value="injured">🔴 Травмирован</option>
+                  </select>
+
+                  <!-- Стрелка -->
+                  <span
+                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white"
+                  >
+                    ▼
+                  </span>
+                </div>
               </FormGroup>
 
               <FormGroup label="Аватар">
@@ -328,7 +351,7 @@ const savePlayer = async () => {
       nickname: newPlayer.value.nickname.trim(),
       rating: parseFloat(newPlayer.value.rating),
       avatar: null,
-      mime: null,
+      mime_type: null,
     }
 
     // Обработка аватара
@@ -336,7 +359,7 @@ const savePlayer = async () => {
       try {
         const result = await toBase64(newPlayer.value.avatar)
         payload.avatar = result.base64
-        payload.mime = result.mime
+        payload.mime_type = result.mime
       } catch (err) {
         console.error('Ошибка при конвертации изображения:', err)
         toast.error('Не удалось обработать изображение')
@@ -351,7 +374,7 @@ const savePlayer = async () => {
       response = await postData(`player/${editingPlayerId.value}/update`, payload)
 
       // Обновляем игрока в списке
-      const index = players.value.findIndex(p => p.id === editingPlayerId.value)
+      const index = players.value.findIndex((p) => p.id === editingPlayerId.value)
       if (index !== -1) {
         players.value[index] = {
           ...players.value[index],
@@ -385,7 +408,9 @@ const savePlayer = async () => {
     closeModal()
   } catch (err) {
     console.error('Ошибка при сохранении игрока:', err)
-    const errorMessage = err.data?.message || `Произошла ошибка при ${isEditMode.value ? 'обновлении' : 'создании'} игрока`
+    const errorMessage =
+      err.data?.message ||
+      `Произошла ошибка при ${isEditMode.value ? 'обновлении' : 'создании'} игрока`
     toast.error(errorMessage)
   } finally {
     isSubmitting.value = false

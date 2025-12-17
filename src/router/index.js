@@ -10,6 +10,7 @@ import TeamsDashboard from '@/views/user/teams/TeamsDashboard.vue'
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import PlayerScorecard from '@/views/user/players/PlayerScorecard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,12 @@ const router = createRouter({
 
     { name: 'Matches', path: '/matches', component: MatchesView, meta: { needsAuth: true } },
     { name: 'Transfers', path: '/transfers', component: TransfersList, meta: { needsAuth: true } },
+    {
+      name: 'PlayerScorecard',
+      path: '/player/:id/:nickname',
+      component: PlayerScorecard,
+      meta: { needsAuth: true },
+    },
   ],
 })
 

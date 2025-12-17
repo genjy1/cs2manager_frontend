@@ -240,9 +240,9 @@
             <div class="absolute top-3 left-3">
               <span
                 class="px-3 py-1 text-xs font-bold rounded-full backdrop-blur-sm"
-                :class="getStatusClass(player.team_status)"
+                :class="getStatusClass(player.player_status)"
               >
-                {{ getStatusLabel(player.team_status) }}
+                {{ getStatusLabel(player.player_status) }}
               </span>
             </div>
 
@@ -335,14 +335,16 @@
 <script setup>
 import { getData } from '@/utils/data/getData'
 import { computed, onMounted, ref, h } from 'vue'
+import { useRouter } from 'vue-router'
 
 /* ================= EMITS ================= */
 
-const emit = defineEmits(['add-player', 'select-player'])
+// const emit = defineEmits(['add-player', 'select-player'])
 
 /* ================= STATE ================= */
 
 const players = ref([])
+const router = useRouter()
 const isLoading = ref(false)
 const error = ref(null)
 const activeFilter = ref('all')
@@ -385,21 +387,21 @@ const FreeAgentIcon = () =>
  * Количество игроков в основном составе
  */
 const mainSquadCount = computed(() => {
-  return players.value.filter((p) => p.team_status === 'main_squad').length
+  return players.value.filter((p) => p.player_status === 'main_squad').length
 })
 
 /**
  * Количество игроков на скамейке запасных
  */
 const benchCount = computed(() => {
-  return players.value.filter((p) => p.team_status === 'bench').length
+  return players.value.filter((p) => p.player_status === 'bench').length
 })
 
 /**
  * Количество свободных агентов
  */
 const freeAgentsCount = computed(() => {
-  return players.value.filter((p) => p.team_status === 'free_agent').length
+  return players.value.filter((p) => p.player_status === 'free_agent').length
 })
 
 /**
@@ -440,7 +442,7 @@ const filteredPlayers = computed(() => {
     return players.value
   }
 
-  return players.value.filter((p) => p.team_status === activeFilter.value)
+  return players.value.filter((p) => p.player_status === activeFilter.value)
 })
 
 /**
@@ -544,8 +546,10 @@ const handleImageError = (event) => {
  * Выбрать игрока
  */
 const selectPlayer = (player) => {
-  console.log('Selected player:', player)
-  emit('select-player', player)
+  router.push({
+    name: 'PlayerScorecard',
+    params: { id: player.id, nickname: player.nickname },
+  })
 }
 
 /* ================= API ================= */
@@ -560,7 +564,7 @@ const loadPlayers = async () => {
   try {
     const response = await getData('players/get')
 
-    players.value = response?.data || []
+    players.value = response || []
 
     console.log('Загружено игроков:', players.value.length)
 

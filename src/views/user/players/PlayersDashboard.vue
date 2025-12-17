@@ -337,10 +337,6 @@ import { getData } from '@/utils/data/getData'
 import { computed, onMounted, ref, h } from 'vue'
 import { useRouter } from 'vue-router'
 
-/* ================= EMITS ================= */
-
-// const emit = defineEmits(['add-player', 'select-player'])
-
 /* ================= STATE ================= */
 
 const players = ref([])
@@ -563,15 +559,7 @@ const loadPlayers = async () => {
 
   try {
     const response = await getData('players/get')
-
     players.value = response || []
-
-    console.log('Загружено игроков:', players.value.length)
-
-    // Статистика по статусам
-    console.log('Основной состав:', mainSquadCount.value)
-    console.log('Запасные:', benchCount.value)
-    console.log('Свободные агенты:', freeAgentsCount.value)
   } catch (err) {
     console.error('Ошибка при загрузке игроков:', err)
     error.value = 'Не удалось загрузить базу игроков'

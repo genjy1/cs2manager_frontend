@@ -77,7 +77,7 @@
                   v-else
                   class="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 text-white text-5xl font-black"
                 >
-                  {{ getInitials }}
+                  {{ playerInitials }}
                 </div>
               </div>
 
@@ -118,7 +118,7 @@
                 </svg>
                 <span class="text-sm text-gray-400 font-medium">Рейтинг</span>
               </div>
-              <p class="text-4xl font-bold text-orange-400">{{ formatRating }}</p>
+              <p class="text-4xl font-bold text-orange-400">{{ formatPlayerRating }}</p>
             </div>
 
             <!-- Player ID -->
@@ -188,6 +188,9 @@
 import { getData } from '@/utils/data/getData'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { usePlayerImage } from '@/composables/usePlayerImage'
+import { usePlayerStatus } from '@/composables/usePlayerStatus'
+import { formatRating, formatDate } from '@/composables/useFormatters'
 
 const player = ref({})
 const route = useRoute()
@@ -195,6 +198,11 @@ const router = useRouter()
 const id = ref(route.params.id)
 const isLoading = ref(false)
 const error = ref(null)
+
+// Используем composables
+const { playerAvatar, playerInitials, handleImageError } = usePlayerImage(player)
+const playerStatus = computed(() => player.value.player_status)
+const { statusClass: getStatusClass, statusLabel: getStatusLabel } = usePlayerStatus(playerStatus)
 
 /**
  * Получить данные игрока с сервера
@@ -233,101 +241,9 @@ const goBack = () => {
 }
 
 /**
- * Получить аватар игрока
- */
-const playerAvatar = computed(() => {
-  if (!player.value.images || !Array.isArray(player.value.images) || player.value.images.length === 0) {
-    return null
-  }
-
-  const firstImage = player.value.images[0]
-  if (!firstImage.base64) {
-    return null
-  }
-
-  const mimeType = firstImage.mime_type || 'image/jpeg'
-  return `data:${mimeType};base64,${firstImage.base64}`
-})
-
-/**
- * Получить инициалы игрока
- */
-const getInitials = computed(() => {
-  if (player.value.nickname) {
-    return player.value.nickname.substring(0, 2).toUpperCase()
-  }
-
-  const firstName = player.value.name?.charAt(0) || ''
-  const lastName = player.value.surname?.charAt(0) || ''
-  return (firstName + lastName).toUpperCase() || '?'
-})
-
-/**
  * Форматировать рейтинг
  */
-const formatRating = computed(() => {
-  if (!player.value.rating && player.value.rating !== 0) return '0.00'
-  return Number(player.value.rating).toFixed(2)
-})
-
-/**
- * Получить класс для статуса
- */
-const getStatusClass = computed(() => {
-  const status = player.value.player_status
-  const classes = {
-    main_squad: 'bg-green-500/90 text-white border border-green-400',
-    bench: 'bg-blue-500/90 text-white border border-blue-400',
-    free_agent: 'bg-purple-500/90 text-white border border-purple-400',
-    in_team: 'bg-blue-500/90 text-white border border-blue-400',
-    injured: 'bg-red-500/90 text-white border border-red-400',
-  }
-
-  return classes[status] || 'bg-gray-500/90 text-white border border-gray-400'
-})
-
-/**
- * Получить текст для статуса
- */
-const getStatusLabel = computed(() => {
-  const status = player.value.player_status
-  const labels = {
-    main_squad: 'Основной состав',
-    bench: 'Запасной',
-    free_agent: 'Свободный агент',
-    in_team: 'В команде',
-    injured: 'Травмирован',
-  }
-
-  return labels[status] || status?.toUpperCase() || 'Н/Д'
-})
-
-/**
- * Форматировать дату
- */
-const formatDate = (dateString) => {
-  if (!dateString) return 'Н/Д'
-
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  } catch (err) {
-    return dateString
-  }
-}
-
-/**
- * Обработка ошибки загрузки изображения
- */
-const handleImageError = (event) => {
-  event.target.style.display = 'none'
-}
+const formatPlayerRating = computed(() => formatRating(player.value.rating))
 
 onMounted(() => {
   loadPlayer()

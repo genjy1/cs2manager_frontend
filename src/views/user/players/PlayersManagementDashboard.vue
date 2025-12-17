@@ -50,9 +50,13 @@
                     v-model="newPlayer.status"
                     class="w-full appearance-none p-3 pr-10 border-2 rounded-lg border-white bg-transparent text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
                   >
-                    <option value="free_agent">🟢 Свободный агент</option>
-                    <option value="in_team">🔵 В команде</option>
-                    <option value="injured">🔴 Травмирован</option>
+                    <option
+                      v-for="option in playerStatusOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
                   </select>
 
                   <!-- Стрелка -->
@@ -180,6 +184,11 @@ import FormGroup from '@/components/FormGroup.vue'
 import { getData } from '@/utils/data/getData'
 import { toBase64 } from '@/utils/data/toBase64'
 import { postData } from '@/utils/data/postData'
+import { PLAYER_STATUS_OPTIONS, DEFAULT_PLAYER_STATUS } from '@/constants/playerStatus'
+
+/* ================= CONSTANTS ================= */
+
+const playerStatusOptions = PLAYER_STATUS_OPTIONS
 
 /* ================= STATE ================= */
 
@@ -202,7 +211,7 @@ const newPlayer = ref({
   surname: '',
   nickname: '',
   rating: '',
-  status: 'free_agent',
+  status: DEFAULT_PLAYER_STATUS,
   avatar: null,
 })
 
@@ -279,7 +288,7 @@ const resetForm = () => {
     surname: '',
     nickname: '',
     rating: '',
-    status: 'free_agent',
+    status: DEFAULT_PLAYER_STATUS,
     avatar: null,
   }
   filePreview.value = null
@@ -309,7 +318,7 @@ const editPlayer = async (player) => {
     surname: player.surname,
     nickname: player.nickname,
     rating: player.rating.toString(),
-    status: player.player_status || 'free_agent',
+    status: player.player_status || DEFAULT_PLAYER_STATUS,
     avatar: null,
   }
 

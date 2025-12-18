@@ -30,7 +30,7 @@ import router from '@/router'
 const toast = useToast()
 
 const form = ref([
-  { name: 'name', id: 'name', value: '', type: 'text', label: 'Имя' },
+  { name: 'email', id: 'email', value: '', type: 'text', label: 'Email' },
   { name: 'password', id: 'password', value: '', type: 'password', label: 'Пароль' },
 ])
 
